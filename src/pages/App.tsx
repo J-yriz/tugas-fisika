@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import CanvasBg from "./components/CanvasBg";
 import { ICanvasData } from "../utility/Type";
 
 function App() {
+  const alertRef = useRef<boolean>(false);
   const [canvasData, setCanvasData] = useState<ICanvasData>({} as ICanvasData);
 
   const handleButton = () => {
@@ -11,6 +12,12 @@ function App() {
       sudut: Number((document.getElementById("sudut") as HTMLInputElement).value),
       warna: (document.getElementById("warna") as HTMLInputElement).value,
     };
+
+    alertRef.current = false;
+    if (inputData.sudut > 45 && !alertRef.current) {
+      alert("Sudut tidak boleh lebih dari 45 derajat");
+      alertRef.current = true
+    }
 
     setCanvasData(inputData);
   };
