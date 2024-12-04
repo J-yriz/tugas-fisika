@@ -4,7 +4,12 @@ import ButtonDelay from "./components/ButtonDelay";
 import { ICanvasData } from "../utility/Type";
 
 function App() {
+  const [repeatOn, setRepeatOn] = useState<boolean>(false);
   const [canvasData, setCanvasData] = useState<ICanvasData>({} as ICanvasData);
+
+  const changeDelay = () => {
+    setRepeatOn(!repeatOn);
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -17,7 +22,7 @@ function App() {
     };
 
     if (inputData.kecepatan <= 0) return;
-    if (inputData.sudut > 90) return alert("Sudut tidak boleh lebih dari 45 derajat");
+    if (inputData.sudut > 90) return alert("Sudut tidak boleh lebih dari 90 derajat");
 
     setCanvasData(inputData);
   };
@@ -31,9 +36,9 @@ function App() {
         <button type="submit" className="bg-sky-300 hover:bg-sky-400 transition-colors p-1 px-3 rounded">
           GO!
         </button>
-        <ButtonDelay />
+        <ButtonDelay repeatOn={repeatOn} changeDelay={changeDelay} />
       </form>
-      <CanvasBg canvasData={canvasData} />
+      <CanvasBg canvasData={canvasData} repeatOn={repeatOn} />
     </div>
   );
 }

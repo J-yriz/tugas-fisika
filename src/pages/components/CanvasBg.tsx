@@ -1,39 +1,26 @@
 import React, { useRef, useEffect, useState } from "react";
 import { CosValues, ICanvasData, SinValues } from "../../utility/Type";
-import { menghitungAkhirMendatar, menghitungAkhirVerHori } from "../../utility/Function";
 
 interface IViewUser {
-  tengahMendatar: number;
-  akhirMendatar: number;
-}
-
-interface ISatuanJarak {
-  tengaMendatar: string;
+  tengahMendatar: string;
   akhirMendatar: string;
 }
 
-const CanvasBg = ({ canvasData }: { canvasData: ICanvasData }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const resistansiUdara = useRef<number>(Number((Math.random() * (10 - 5) + 5).toFixed(3))).current;
+const CanvasBg = ({ canvasData, repeatOn }: { canvasData: ICanvasData; repeatOn: boolean }) => {
   const animationRef = useRef<number | null>(null); // Menyimpan ID animasi untuk dibatalkan
-  const [viewUser, setViewUser] = useState<IViewUser>({ tengahMendatar: 0, akhirMendatar: 0 });
-  const [satuanJarak, setSatuanJarak] = useState<ISatuanJarak>({ tengaMendatar: "Meter", akhirMendatar: "KM" });
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const resistansiUdara = useRef<number>(Number((Math.random() * (10 - 5) + 5).toFixed(3))).current;
+  const [viewUser, setViewUser] = useState<IViewUser>({ tengahMendatar: "0 Meter", akhirMendatar: "0 Meter" });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d") as CanvasRenderingContext2D;
 
-    const hasilHitungDatar = menghitungAkhirMendatar(canvasData.kecepatan, canvasData.sudut, resistansiUdara);
-    const hasilHitungVeriHori = menghitungAkhirVerHori(canvasData.kecepatan, canvasData.sudut, resistansiUdara);
-
-    // if (canvasData.sudut === 0 && typeof hasilHitungDatar === "object")
-    //   setViewUser({ tengahMendatar: 0, akhirMendatar: hasilHitungDatar.posisiAkhirX });
-    // else if (canvasData.sudut > 0 && typeof hasilHitungVeriHori === "object")
-    //   setViewUser({ tengahMendatar: hasilHitungVeriHori.titikTertinggi, akhirMendatar: hasilHitungVeriHori.posisiAkhirX });
-
     const perMeter = 0.06; // per 1 meter dalam pixel
     const perKM = 0.00006; // per 1 KM dalam pixel
+    const massaBenda = 0.5; // kg
+
     const width = canvas.width;
     const height = canvas.height;
 
@@ -64,9 +51,7 @@ const CanvasBg = ({ canvasData }: { canvasData: ICanvasData }) => {
     let tinggiSementara = 0;
     const draw = (Vo: number, angle: number) => {
       // Bersihkan animasi sebelumnya
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
 
       const Vox = Vo * CosValues[`COS_${angle}` as keyof typeof CosValues];
       const Voy = Vo * SinValues[`SIN_${angle}` as keyof typeof SinValues];
@@ -75,7 +60,7 @@ const CanvasBg = ({ canvasData }: { canvasData: ICanvasData }) => {
 
       const update = () => {
         const t = (Date.now() - startTime) / 100; // Konversi waktu ke detik
-        const x = Vox * t + 10;
+        const x = Vox * t;
         const y = Voy * t - 0.5 * g * Math.pow(t, 2) + 12;
 
         // Menghapus canvas sebelum menggambar
@@ -89,14 +74,11 @@ const CanvasBg = ({ canvasData }: { canvasData: ICanvasData }) => {
 
         // Gambar bola
         context.beginPath();
-        context.arc(x, y > 10 ? y : 10, 10, 0, Math.PI * 2, true);
+        context.arc(x < 10 ? 10 : x, y > 10 ? y : 10, 10, 0, Math.PI * 2, true);
         context.fill();
 
         // Berhenti jika bola mencapai tanah
-        if (y < 12) {
-          animationRef.current = null;
-          return; // Hentikan animasi
-        }
+        if (y < 12) return (animationRef.current = null); // Hentikan animasi
 
         // Lanjutkan animasi
         animationRef.current = requestAnimationFrame(update);
@@ -105,10 +87,9 @@ const CanvasBg = ({ canvasData }: { canvasData: ICanvasData }) => {
         const changeTengahMendatar = Number((tinggiSementara * perMeter).toFixed(2)) >= 1000;
         const changeAkhirMendatar = Number((x * perMeter).toFixed(2)) >= 1000;
         setViewUser({
-          tengahMendatar: changeTengahMendatar ? Number((tinggiSementara * perKM).toFixed(2)) : Number((tinggiSementara * perMeter).toFixed(2)),
-          akhirMendatar: changeAkhirMendatar ? Number((x * perKM).toFixed(2)) : Number((x * perMeter).toFixed(2)),
+          tengahMendatar: changeTengahMendatar ? `${(tinggiSementara * perKM).toFixed(2)} KM` : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
+          akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
         });
-        setSatuanJarak({ tengaMendatar: changeTengahMendatar ? "KM" : "Meter", akhirMendatar: changeAkhirMendatar ? "KM" : "Meter" });
       };
 
       update();
@@ -117,32 +98,22 @@ const CanvasBg = ({ canvasData }: { canvasData: ICanvasData }) => {
     // Atur ulang transformasi dan warna
     context.setTransform(1, 0, 0, -1, 0, height);
     context.fillStyle = canvasData.warna;
-    context.beginPath();
-    context.arc(10, 10, 10, 0, Math.PI * 2, true);
-    context.fill();
 
     // Mulai menggambar
-    draw(canvasData.kecepatan - resistansiUdara, Number(canvasData.sudut));
-    // draw(99, 45 * (Math.PI / 180));
+    draw(canvasData.kecepatan - resistansiUdara / massaBenda, Number(canvasData.sudut));
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [canvasData]);
+  }, [canvasData, resistansiUdara]);
 
   return (
     <div className="place-self-center">
       <div className="flex justify-between">
         <div className="flex items-center space-x-3">
           <p>Jarak Awal : 0 Meter</p>
-          <p>
-            Titik Tertinggi : {viewUser.tengahMendatar} {satuanJarak.tengaMendatar}
-          </p>
-          <p>
-            Jarak Akhir : {viewUser.akhirMendatar} {satuanJarak.akhirMendatar}
-          </p>
+          <p>Titik Tertinggi : {viewUser.tengahMendatar}</p>
+          <p>Jarak Akhir : {viewUser.akhirMendatar}</p>
         </div>
         <p>Resistensi Udara : {resistansiUdara} m/s²</p>
       </div>
