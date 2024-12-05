@@ -1,15 +1,15 @@
 import React, { useRef, useEffect, useState } from "react";
-import { CosValues, ICanvasData, SinValues } from "../../utility/Type";
+import { CosValues, ICanvasData, IDataTable, SinValues } from "../../utility/Type";
 
 interface IViewUser {
   tengahMendatar: string;
   akhirMendatar: string;
 }
 
-const CanvasBg = ({ canvasData, repeatOn }: { canvasData: ICanvasData; repeatOn: boolean }) => {
+const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDataTable: React.Dispatch<React.SetStateAction<IDataTable>> }) => {
   const animationRef = useRef<number | null>(null); // Menyimpan ID animasi untuk dibatalkan
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const resistansiUdara = useRef<number>(Number((Math.random() * (10 - 5) + 5).toFixed(3))).current;
+  const resistensiUdara = useRef<number>(Number((Math.random() * (10 - 5) + 5).toFixed(3))).current;
   const [viewUser, setViewUser] = useState<IViewUser>({ tengahMendatar: "0 Meter", akhirMendatar: "0 Meter" });
 
   useEffect(() => {
@@ -20,6 +20,7 @@ const CanvasBg = ({ canvasData, repeatOn }: { canvasData: ICanvasData; repeatOn:
     const perMeter = 0.06; // per 1 meter dalam pixel
     const perKM = 0.00006; // per 1 KM dalam pixel
     const massaBenda = 0.5; // kg
+    const gravity = 9.8; // m/s^2
 
     const width = canvas.width;
     const height = canvas.height;
@@ -61,7 +62,7 @@ const CanvasBg = ({ canvasData, repeatOn }: { canvasData: ICanvasData; repeatOn:
       const update = () => {
         const t = (Date.now() - startTime) / 100; // Konversi waktu ke detik
         const x = Vox * t;
-        const y = Voy * t - 0.5 * g * Math.pow(t, 2) + 12;
+        const y = Voy * t - massaBenda * g * Math.pow(t, 2);
 
         // Menghapus canvas sebelum menggambar
         context.clearRect(0, 0, width, height);
@@ -74,11 +75,11 @@ const CanvasBg = ({ canvasData, repeatOn }: { canvasData: ICanvasData; repeatOn:
 
         // Gambar bola
         context.beginPath();
-        context.arc(x < 10 ? 10 : x, y > 10 ? y : 10, 10, 0, Math.PI * 2, true);
+        context.arc(x < 10 && angle <= 90 ? 10 : x, y > 10 ? y : 10, 10, 0, Math.PI * 2, true);
         context.fill();
 
         // Berhenti jika bola mencapai tanah
-        if (y < 12) return (animationRef.current = null); // Hentikan animasi
+        if (y < 0) return (animationRef.current = null); // Hentikan animasi
 
         // Lanjutkan animasi
         animationRef.current = requestAnimationFrame(update);
@@ -100,22 +101,29 @@ const CanvasBg = ({ canvasData, repeatOn }: { canvasData: ICanvasData; repeatOn:
     context.fillStyle = canvasData.warna;
 
     // Mulai menggambar
-    draw(canvasData.kecepatan - resistansiUdara / massaBenda, Number(canvasData.sudut));
+    draw(canvasData.kecepatan - resistensiUdara / massaBenda + gravity, Number(canvasData.sudut));
 
+    setDataTable({
+      percepatan: { massaBenda, resistensiUdara },
+      sudut: {
+        sin: SinValues[`SIN_${canvasData.sudut}` as keyof typeof SinValues],
+        cos: CosValues[`COS_${canvasData.sudut}` as keyof typeof CosValues],
+      },
+    });
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [canvasData, resistansiUdara]);
+  }, [canvasData, resistensiUdara, setDataTable]);
 
   return (
     <div className="place-self-center">
       <div className="flex justify-between">
         <div className="flex items-center space-x-3">
-          <p>Jarak Awal : 0 Meter</p>
+          <p>Jarak Awal : 0.00 Meter</p>
           <p>Titik Tertinggi : {viewUser.tengahMendatar}</p>
           <p>Jarak Akhir : {viewUser.akhirMendatar}</p>
         </div>
-        <p>Resistensi Udara : {resistansiUdara} m/s²</p>
+        <p>Resistensi Udara : {resistensiUdara} m/s²</p>
       </div>
       <canvas ref={canvasRef} width={1000} height={500} className="border-2" />
       <div className="information space-y-7 mt-3">

@@ -1,20 +1,17 @@
 import { CosValues, SinValues } from "../utility/Type";
 
 // untuk derajat === 0
-const menghitungAkhirMendatar = (kecepatanAwal: number, sudut: number, resistansiUdara: number) => {
-  const massaBola = 0.5; // kg
-  const gravitasi = 9.8; // m/s^2
-
+const menghitungAkhirMendatar = (kecepatanAwal: number, sudut: number, massaBenda: number, gravitasi: number, resistensiUdara: number) => {
   // Ambil nilai cos dari enum
   const cosValue = CosValues[`COS_${sudut}` as keyof typeof CosValues];
   if (cosValue === undefined) return "Nilai sudut tidak valid";
 
   // Perhitungan
   const Vox = kecepatanAwal * cosValue; // Kecepatan mendatar awal
-  const gayaNormal = massaBola * gravitasi; // Gaya normal
+  const gayaNormal = massaBenda * gravitasi; // Gaya normal
   const koefisienGesekan = 0.3 * gayaNormal; // Koefisien gesekan rata-rata
-  const percepatanGesekan = koefisienGesekan / massaBola; // Percepatan akibat gesekan
-  const totalPercepatan = percepatanGesekan + resistansiUdara; // Total percepatan
+  const percepatanGesekan = koefisienGesekan / massaBenda; // Percepatan akibat gesekan
+  const totalPercepatan = percepatanGesekan + resistensiUdara; // Total percepatan
   if (totalPercepatan <= 0) return "Total percepatan tidak valid"; // Pastikan percepatan masuk akal
 
   const t_darat = Vox / totalPercepatan; // Waktu total mendatar
@@ -24,8 +21,7 @@ const menghitungAkhirMendatar = (kecepatanAwal: number, sudut: number, resistans
 };
 
 // untuk derajat > 0
-const menghitungAkhirVerHori = (kecepatanAwal: number, sudut: number, resistansiUdara: number) => {
-  const gravitasi = 9.8; // m/s^2
+const menghitungAkhirVerHori = (kecepatanAwal: number, sudut: number, gravitasi: number, resistensiUdara: number) => {
   const posisiAwalY = 0; // m
   const posisiAwalX = 0; // m
 
@@ -41,7 +37,7 @@ const menghitungAkhirVerHori = (kecepatanAwal: number, sudut: number, resistansi
   const totalPercepatanVertikal = gravitasi; // Percepatan vertikal akibat gravitasi
 
   const t_udara = (2 * Voy) / gravitasi; // Waktu total di udara
-  const posisiAkhirX = Number((posisiAwalX + Vox * t_udara - 0.5 * resistansiUdara * Math.pow(t_udara, 2)).toFixed(3)); // Posisi horizontal akhir
+  const posisiAkhirX = Number((posisiAwalX + Vox * t_udara - 0.5 * resistensiUdara * Math.pow(t_udara, 2)).toFixed(3)); // Posisi horizontal akhir
   const posisiAkhirY = Number(posisiAwalY.toFixed(3)); // Posisi vertikal akhir tetap sama karena kembali ke tanah
   const titikTertinggi = Number((posisiAwalY + Voy * (0.5 * t_udara) - 0.5 * totalPercepatanVertikal * Math.pow(0.5 * t_udara, 2)).toFixed(3)); // Titik tertinggi
 

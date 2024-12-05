@@ -731,3 +731,14 @@ export interface ICanvasData {
   sudut: number;
   warna: string;
 }
+
+export interface IDataTable {
+  percepatan: {
+    massaBenda: number;
+    resistensiUdara: number;
+  };
+  sudut: {
+    sin: number;
+    cos: number;
+  }
+}
