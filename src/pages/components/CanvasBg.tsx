@@ -1,119 +1,144 @@
 import React, { useRef, useEffect, useState } from "react";
 import { CosValues, ICanvasData, IDataTable, SinValues } from "../../utility/Type";
+import { mencariGayaHambatanHorizontal } from "../../utility/Function";
 
 interface IViewUser {
   tengahMendatar: string;
   akhirMendatar: string;
+  waktuTempuh: string;
 }
+
+export let clearCanvas: () => void;
 
 const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDataTable: React.Dispatch<React.SetStateAction<IDataTable>> }) => {
   const animationRef = useRef<number | null>(null); // Menyimpan ID animasi untuk dibatalkan
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const resistensiUdara = useRef<number>(Number((Math.random() * (10 - 5) + 5).toFixed(3))).current;
-  const [viewUser, setViewUser] = useState<IViewUser>({ tengahMendatar: "0 Meter", akhirMendatar: "0 Meter" });
+  const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referensi ke canvas
+  // const resistensiUdara = useRef<number>(Number((Math.random() * (15 - 1) + 1).toFixed(3))).current;
+  const [viewUser, setViewUser] = useState<IViewUser>({ tengahMendatar: "0 Meter", akhirMendatar: "0 Meter", waktuTempuh: "0 Detik" });
+
+  // Menyimpan Lokasi Bola sebelumnya
+  const lokasiBola = useRef<{ x: number; y: number }[]>([]);
+
+  const perMeter = 0.06; // per 1 meter dalam pixel
+  const perKM = 0.00006; // per 1 KM dalam pixel
+  const massaBenda = 0.5; // kg
+  const gravity = 9.8; // m/s^2
+  const drag = 0.3; // koefisien hambatan bola
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const context = canvas.getContext("2d") as CanvasRenderingContext2D;
 
-    const perMeter = 0.06; // per 1 meter dalam pixel
-    const perKM = 0.00006; // per 1 KM dalam pixel
-    const massaBenda = 0.5; // kg
-    const gravity = 9.8; // m/s^2
+    const width = canvas.width; // Lebar canvas
+    const height = canvas.height; // Tinggi canvas
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const backgroundImage = new Image();
+    backgroundImage.src = "/bg-cover.svg";
+    const ballImage = new Image();
+    ballImage.src = "/bola.svg";
 
-    const gambarGrid = () => {
-      const gridSize = 25; // Ukuran grid dalam piksel
+    let ballImageLoaded = false;
+    ballImage.onload = () => (ballImageLoaded = true);
 
-      // Gambar grid
-      context.strokeStyle = "#ddd"; // Warna garis grid
-      context.lineWidth = 1;
+    const gambarLapangan = () => {
+      context.save(); // simpan keadaan canvas sebelum di flip
+      // set transformasi untuk flip canvas agar gambar normal
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.drawImage(backgroundImage, 0, 0, width, height);
+      context.restore(); // set ulang keadaan canvas sebelum diflip
+    };
 
-      // Garis vertikal
-      for (let gx = 0; gx <= width; gx += gridSize) {
-        context.beginPath();
-        context.moveTo(gx, 0);
-        context.lineTo(gx, height);
-        context.stroke();
-      }
-
-      // Garis horizontal
-      for (let gy = 0; gy <= height; gy += gridSize) {
-        context.beginPath();
-        context.moveTo(0, gy);
-        context.lineTo(width, gy);
-        context.stroke();
+    const gambarBola = (x: number, y: number, angle: number) => {
+      if (ballImageLoaded) {
+        context.save(); // Simpan keadaan canvas sebelum di flip
+        context.drawImage(ballImage, x, y > 90 ? y : 90, 30, 30);
+        context.restore(); // Setel ulang keadaan canvas sebelum di flip
+      } else {
+        setTimeout(() => gambarBola(x, y, angle), 100); // Coba lagi setelah 100ms
       }
     };
 
-    let tinggiSementara = 0;
-    const draw = (Vo: number, angle: number) => {
-      // Bersihkan animasi sebelumnya
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    clearCanvas = () => {
+      lokasiBola.current = [];
+      context.clearRect(0, 0, width, height);
+      gambarLapangan();
+      gambarBola(0, 0, canvasData.sudut);
+    };
 
-      const Vox = Vo * CosValues[`COS_${angle}` as keyof typeof CosValues];
-      const Voy = Vo * SinValues[`SIN_${angle}` as keyof typeof SinValues];
-      const g = 9.8;
-      const startTime = Date.now();
+    // Gambar lapangan
+    backgroundImage.onload = () => {
+      let tinggiSementara = 0;
+      const draw = (Vo: number, angle: number) => {
+        if (animationRef.current) cancelAnimationFrame(animationRef.current); // Bersihkan animasi sebelumnya
 
-      const update = () => {
-        const t = (Date.now() - startTime) / 100; // Konversi waktu ke detik
-        const x = Vox * t;
-        const y = Voy * t - massaBenda * g * Math.pow(t, 2);
+        const Vox = Vo * CosValues[`COS_${angle}` as keyof typeof CosValues];
+        const Voy = Vo * SinValues[`SIN_${angle}` as keyof typeof SinValues];
+        const startTime = Date.now();
 
-        // Menghapus canvas sebelum menggambar
-        context.clearRect(0, 0, width, height);
+        gambarLapangan(); // Gambar lapangan
 
-        // Gambar grid
-        gambarGrid();
+        const update = () => {
+          const t = (Date.now() - startTime) / 100; // Konversi waktu ke detik
+          const x = Vox * t
+          const y = Voy * t - gravity * Math.pow(t, 2) + 90;
 
-        // agar tidak spam sistem
-        if (isNaN(x) || isNaN(y)) return;
+          // console.log(x);
 
-        // Gambar bola
-        context.beginPath();
-        context.arc(x < 10 && angle <= 90 ? 10 : x, y > 10 ? y : 10, 10, 0, Math.PI * 2, true);
-        context.fill();
+          if (!isNaN(x) || !isNaN(y)) {
+            context.clearRect(0, 0, width, height); // Bersihkan canvas
+            gambarLapangan(); // Gambar Lapangan
+            gambarBola(x, y, angle); // Gambar bola
+            lokasiBola.current.length && lokasiBola.current.forEach((lokasi) => gambarBola(lokasi.x, lokasi.y, canvasData.sudut));
 
-        // Berhenti jika bola mencapai tanah
-        if (y < 0) return (animationRef.current = null); // Hentikan animasi
+            // Berhenti jika bola mencapai tanah
+            if (y < 90) {
+              if (lokasiBola.current.length >= 2) lokasiBola.current.shift();
+              lokasiBola.current.push({ x, y });
+              animationRef.current = null;
+              gambarBola(0, 0, canvasData.sudut);
+              return;
+            } // Hentikan animasi
 
-        // Lanjutkan animasi
-        animationRef.current = requestAnimationFrame(update);
-        if (tinggiSementara === 0) tinggiSementara = y;
-        if (tinggiSementara < y) tinggiSementara = y;
-        const changeTengahMendatar = Number((tinggiSementara * perMeter).toFixed(2)) >= 1000;
-        const changeAkhirMendatar = Number((x * perMeter).toFixed(2)) >= 1000;
-        setViewUser({
-          tengahMendatar: changeTengahMendatar ? `${(tinggiSementara * perKM).toFixed(2)} KM` : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
-          akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
-        });
+            // Lanjutkan animasi
+            animationRef.current = requestAnimationFrame(update);
+            if (tinggiSementara === 0) tinggiSementara = y;
+            if (tinggiSementara < y) tinggiSementara = y;
+            const changeTengahMendatar = Number((tinggiSementara * perMeter).toFixed(2)) >= 1000;
+            const changeAkhirMendatar = Number((x * perMeter).toFixed(2)) >= 1000;
+            setViewUser({
+              tengahMendatar: changeTengahMendatar
+                ? `${(tinggiSementara * perKM).toFixed(2)} KM`
+                : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
+              akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
+              waktuTempuh: `${t} Detik`,
+            });
+          }
+        };
+
+        update();
       };
 
-      update();
+      // Atur ulang transformasi dan warna
+      context.setTransform(1, 0, 0, -1, 0, height);
+      gambarBola(0, 0, canvasData.sudut);
+
+      // Mulai menggambar
+      draw(canvasData.kecepatan, Number(canvasData.sudut));
+
+      setDataTable({
+        percepatan: { massaBenda },
+        sudut: {
+          sin: SinValues[`SIN_${canvasData.sudut}` as keyof typeof SinValues],
+          cos: CosValues[`COS_${canvasData.sudut}` as keyof typeof CosValues],
+        },
+      });
     };
 
-    // Atur ulang transformasi dan warna
-    context.setTransform(1, 0, 0, -1, 0, height);
-    context.fillStyle = canvasData.warna;
-
-    // Mulai menggambar
-    draw(canvasData.kecepatan - resistensiUdara / massaBenda + gravity, Number(canvasData.sudut));
-
-    setDataTable({
-      percepatan: { massaBenda, resistensiUdara },
-      sudut: {
-        sin: SinValues[`SIN_${canvasData.sudut}` as keyof typeof SinValues],
-        cos: CosValues[`COS_${canvasData.sudut}` as keyof typeof CosValues],
-      },
-    });
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [canvasData, resistensiUdara, setDataTable]);
+  }, [canvasData, setDataTable, lokasiBola]);
 
   return (
     <div className="place-self-center">
@@ -122,8 +147,9 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
           <p>Jarak Awal : 0.00 Meter</p>
           <p>Titik Tertinggi : {viewUser.tengahMendatar}</p>
           <p>Jarak Akhir : {viewUser.akhirMendatar}</p>
+          <p>Waktu Tempuh : {viewUser.waktuTempuh}</p>
         </div>
-        <p>Resistensi Udara : {resistensiUdara} m/s²</p>
+        <p>Drag : {drag}</p>
       </div>
       <canvas ref={canvasRef} width={1000} height={500} className="border-2" />
       <div className="information space-y-7 mt-3">

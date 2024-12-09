@@ -729,16 +729,14 @@ export enum SinValues {
 export interface ICanvasData {
   kecepatan: number;
   sudut: number;
-  warna: string;
 }
 
 export interface IDataTable {
   percepatan: {
     massaBenda: number;
-    resistensiUdara: number;
   };
   sudut: {
     sin: number;
     cos: number;
-  }
+  };
 }

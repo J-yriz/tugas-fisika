@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import CanvasBg from "./components/CanvasBg";
+import ButtonClear from "./components/ButtonClear";
 import { ICanvasData, IDataTable } from "../utility/Type";
 
 function App() {
   const [canvasData, setCanvasData] = useState<ICanvasData>({} as ICanvasData);
-  const [dataTable, setDataTable] = useState<IDataTable>({ percepatan: { massaBenda: 0, resistensiUdara: 0 }, sudut: { sin: 0, cos: 0 } });
+  const [dataTable, setDataTable] = useState<IDataTable>({ percepatan: { massaBenda: 0 }, sudut: { sin: 0, cos: 0 } });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -13,7 +14,6 @@ function App() {
     const inputData = {
       kecepatan: Number(formData.get("kecepatan")),
       sudut: Number(formData.get("sudut")),
-      warna: String(formData.get("warna")),
     };
 
     if (inputData.kecepatan <= 0) return;
@@ -28,14 +28,14 @@ function App() {
         <form onSubmit={handleSubmit} className="font-sans flex items-center space-x-2 justify-center mt-5">
           <input type="number" id="kecepatan" name="kecepatan" placeholder="Masukan kecepatan..." className="bg-slate-200 outline-none p-1 rounded" />
           <input type="number" id="sudut" name="sudut" placeholder="Masukan untuk sudut.." className="bg-slate-200 outline-none p-1 rounded" />
-          <input type="color" id="warna" name="warna" className="h-9" />
           <button type="submit" className="bg-sky-300 hover:bg-sky-400 transition-colors p-1 px-3 rounded">
             GO!
           </button>
+          <ButtonClear />
         </form>
         <CanvasBg canvasData={canvasData} setDataTable={setDataTable} />
       </div>
-      <table className="place-self-center my-16">
+      {/* <table className="place-self-center my-16">
         <thead>
           <tr>
             <th className="border-2 p-1 border-black">Diketahui</th>
@@ -72,7 +72,7 @@ function App() {
             <td className="border-2 p-1 border-black">{dataTable.sudut.cos}</td>
           </tr>
         </tbody>
-      </table>
+      </table> */}
     </>
   );
 }

@@ -44,4 +44,19 @@ const menghitungAkhirVerHori = (kecepatanAwal: number, sudut: number, gravitasi:
   return { posisiAkhirX, posisiAkhirY, titikTertinggi, Vox, Voy };
 };
 
-export { menghitungAkhirMendatar, menghitungAkhirVerHori };
+const mencariLuasPenampang = (jariJariBola: number) => {
+  return Math.PI * Math.pow(jariJariBola, 2);
+};
+
+const mencariGayaHambatanHorizontal = (kecepatanAwal: number, sudut: number, dragBola: number, massaBenda: number, t: number) => {
+  const jariJariBola = 0.11; // m
+  const densitasUdara = 1.225; // kg/m^3
+  const penampangBola = mencariLuasPenampang(jariJariBola); // m^2
+
+  const V0x = kecepatanAwal * CosValues[`COS_${sudut}` as keyof typeof CosValues]; // m/s
+  const Fd = 0.5 * dragBola * densitasUdara * Math.pow(V0x, 2) * penampangBola; // N
+  const aX = -(Fd / massaBenda) * t; // m/s^2
+  return aX;
+};
+
+export { menghitungAkhirMendatar, menghitungAkhirVerHori, mencariGayaHambatanHorizontal };
