@@ -19,9 +19,9 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
   // Menyimpan Lokasi Bola sebelumnya
   const lokasiBola = useRef<{ x: number; y: number }[]>([]);
 
-  const perMeter = 0.055; // per 1 meter dalam pixel
+  const perMeter = 0.0562; // per 1 meter dalam pixel
   const perKM = 0.000055; // per 1 KM dalam pixel
-  const massaBenda = 0.50; // kg
+  const massaBenda = 0.5; // kg
   const gravity = 9.8; // m/s^2
   const drag = 0.3; // koefisien hambatan bola
 
@@ -66,7 +66,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
       lokasiBola.current = [];
       context.clearRect(0, 0, width, height);
       gambarLapangan();
-      gambarBola(0, 0, canvasData.sudut);
+      gambarBola(21, 0, canvasData.sudut);
     };
 
     // Gambar lapangan
@@ -81,12 +81,12 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
 
         gambarLapangan(); // Gambar lapangan
 
+        let x = 0;
         const update = () => {
+          // const waktu = 2*Voy/gravity;
           const t = (Date.now() - startTime) / 100; // Konversi waktu ke detik
-          const x = Vox + mencariGayaHambatanHorizontal(kecepatanAwal, sudut, drag, massaBenda) * t;
+          x += (Vox - mencariGayaHambatanHorizontal(kecepatanAwal, sudut, drag, massaBenda) * 0.01) * 2;
           const y = Voy * t - gravity * Math.pow(t, 2) + 90;
-
-          console.log(x, y);
 
           if (!isNaN(x) || !isNaN(y)) {
             context.clearRect(0, 0, width, height); // Bersihkan canvas
@@ -103,18 +103,17 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
                 ? `${(tinggiSementara * perKM).toFixed(2)} KM`
                 : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
               akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
-              waktuTempuh: `${t} Detik`,
+              waktuTempuh: `${t * 2} Detik`,
             });
 
             // Berhenti jika bola mencapai tanah
-            if (y < 90) {
-              if (lokasiBola.current.length >= 2) lokasiBola.current.shift();
-              lokasiBola.current.push({ x, y });
-              animationRef.current = null;
-              gambarBola(21, 0, canvasData.sudut);
-              return;
-            } // Hentikan animasi
-
+              if (y < 90) {
+                if (lokasiBola.current.length >= 2) lokasiBola.current.shift();
+                lokasiBola.current.push({ x, y });
+                animationRef.current = null;
+                gambarBola(21, 0, canvasData.sudut);
+                return;
+              } // Hentikan animasi
             // Lanjutkan animasi
             animationRef.current = requestAnimationFrame(update);
           }
