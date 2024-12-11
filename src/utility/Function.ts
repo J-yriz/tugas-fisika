@@ -1,13 +1,13 @@
-import { CosValues, SinValues } from "../utility/Type";
+import { CosValues, SinValues } from "./Type";
+
+const mencariSinCos = (sudut: number) => {
+  return { SinValue: SinValues[`SIN_${sudut}` as keyof typeof SinValues], CosValue: CosValues[`COS_${sudut}` as keyof typeof CosValues] };
+};
 
 // untuk derajat === 0
 const menghitungAkhirMendatar = (kecepatanAwal: number, sudut: number, massaBenda: number, gravitasi: number, resistensiUdara: number) => {
-  // Ambil nilai cos dari enum
-  const cosValue = CosValues[`COS_${sudut}` as keyof typeof CosValues];
-  if (cosValue === undefined) return "Nilai sudut tidak valid";
-
   // Perhitungan
-  const Vox = kecepatanAwal * cosValue; // Kecepatan mendatar awal
+  const Vox = kecepatanAwal * mencariSinCos(sudut).CosValue; // Kecepatan mendatar awal
   const gayaNormal = massaBenda * gravitasi; // Gaya normal
   const koefisienGesekan = 0.3 * gayaNormal; // Koefisien gesekan rata-rata
   const percepatanGesekan = koefisienGesekan / massaBenda; // Percepatan akibat gesekan
@@ -25,15 +25,9 @@ const menghitungAkhirVerHori = (kecepatanAwal: number, sudut: number, gravitasi:
   const posisiAwalY = 0; // m
   const posisiAwalX = 0; // m
 
-  // Ambil nilai sin dan cos dari enum
-  const sinValue = SinValues[`SIN_${sudut}` as keyof typeof SinValues];
-  const cosValue = CosValues[`COS_${sudut}` as keyof typeof CosValues];
-
-  if (sinValue === undefined || cosValue === undefined) return "Nilai sudut tidak valid";
-
   // Perhitungan
-  const Voy = kecepatanAwal * sinValue; // Kecepatan vertikal awal
-  const Vox = kecepatanAwal * cosValue; // Kecepatan horizontal awal
+  const Voy = kecepatanAwal * mencariSinCos(sudut).SinValue; // Kecepatan vertikal awal
+  const Vox = kecepatanAwal * mencariSinCos(sudut).CosValue; // Kecepatan horizontal awal
   const totalPercepatanVertikal = gravitasi; // Percepatan vertikal akibat gravitasi
 
   const t_udara = (2 * Voy) / gravitasi; // Waktu total di udara
@@ -48,15 +42,13 @@ const mencariLuasPenampang = (jariJariBola: number) => {
   return Math.PI * Math.pow(jariJariBola, 2);
 };
 
-const mencariGayaHambatanHorizontal = (kecepatanAwal: number, sudut: number, dragBola: number, massaBenda: number, t: number) => {
+const mencariGayaHambatanHorizontal = (kecepatanAwal: number, sudut: number, dragBola: number, massaBenda: number) => {
   const jariJariBola = 0.11; // m
-  const densitasUdara = 1.225; // kg/m^3
+  const densitasUdara = 1.23; // kg/m^3
   const penampangBola = mencariLuasPenampang(jariJariBola); // m^2
 
-  const V0x = kecepatanAwal * CosValues[`COS_${sudut}` as keyof typeof CosValues]; // m/s
-  const Fd = 0.5 * dragBola * densitasUdara * Math.pow(V0x, 2) * penampangBola; // N
-  const aX = -(Fd / massaBenda) * t; // m/s^2
+  const Fd = 0.5 * dragBola * densitasUdara *  penampangBola * Math.pow(kecepatanAwal * mencariSinCos(sudut).CosValue, 2); // N
+  const aX = Fd / massaBenda; // m/s^2
   return aX;
 };
-
 export { menghitungAkhirMendatar, menghitungAkhirVerHori, mencariGayaHambatanHorizontal };
