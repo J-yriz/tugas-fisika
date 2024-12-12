@@ -81,11 +81,10 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
 
         gambarLapangan(); // Gambar lapangan
 
-        let x = 0;
         const update = () => {
           // const waktu = 2*Voy/gravity;
           const t = (Date.now() - startTime) / 100; // Konversi waktu ke detik
-          x += (Vox - mencariGayaHambatanHorizontal(kecepatanAwal, sudut, drag, massaBenda) * 0.01) * 2;
+          const x = Vox * t
           const y = Voy * t - gravity * Math.pow(t, 2) + 90;
 
           if (!isNaN(x) || !isNaN(y)) {
