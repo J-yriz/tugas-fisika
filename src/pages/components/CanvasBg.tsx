@@ -19,7 +19,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
   // Menyimpan Lokasi Bola sebelumnya
   const lokasiBola = useRef<{ x: number; y: number }[]>([]);
 
-  const perMeter = 0.0562; // per 1 meter dalam pixel
+  const perMeter = 0.055; // per 1 meter dalam pixel
   const perKM = 0.000055; // per 1 KM dalam pixel
   const massaBenda = 0.5; // kg
   const gravity = 9.8; // m/s^2
@@ -66,7 +66,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
       lokasiBola.current = [];
       context.clearRect(0, 0, width, height);
       gambarLapangan();
-      gambarBola(21, 0, canvasData.sudut);
+      gambarBola(0, 0, canvasData.sudut);
     };
 
     // Gambar lapangan
@@ -110,7 +110,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
                 if (lokasiBola.current.length >= 2) lokasiBola.current.shift();
                 lokasiBola.current.push({ x, y });
                 animationRef.current = null;
-                gambarBola(21, 0, canvasData.sudut);
+                gambarBola(0, 0, canvasData.sudut);
                 return;
               } // Hentikan animasi
             // Lanjutkan animasi
@@ -123,7 +123,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
 
       // Atur ulang transformasi dan warna
       context.setTransform(1, 0, 0, -1, 0, height);
-      gambarBola(21, 0, canvasData.sudut);
+      gambarBola(0, 0, canvasData.sudut);
 
       // Mulai menggambar
       draw(canvasData.kecepatan, Number(canvasData.sudut));
