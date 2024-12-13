@@ -22,7 +22,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
   const perMeter = 0.055; // per 1 meter dalam pixel
   const perKM = 0.000055; // per 1 KM dalam pixel
   const massaBenda = 0.5; // kg
-  const gravity = 9.8; // m/s^2
+  const gravity = 9.81; // m/s^2
   const drag = 0.3; // koefisien hambatan bola
 
   const CosValue = CosValues[`COS_${canvasData.sudut}` as keyof typeof CosValues];
@@ -52,6 +52,11 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
       context.restore(); // set ulang keadaan canvas sebelum diflip
     };
 
+    const cancelAnimation = () => {
+      cancelAnimationFrame(animationRef.current as number); // Hentikan animasi
+      animationRef.current = null;
+    };
+
     const gambarBola = (x: number, y: number, sudut: number) => {
       if (ballImageLoaded) {
         context.save(); // Simpan keadaan canvas sebelum di flip
@@ -63,6 +68,8 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
     };
 
     clearCanvas = () => {
+      // Bersihkan animasi sebelumnya
+      if (animationRef.current) cancelAnimation();
       lokasiBola.current = [];
       context.clearRect(0, 0, width, height);
       gambarLapangan();
@@ -73,26 +80,38 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
     backgroundImage.onload = () => {
       let tinggiSementara = 0;
       const draw = (kecepatanAwal: number, sudut: number) => {
-        if (animationRef.current) cancelAnimationFrame(animationRef.current); // Bersihkan animasi sebelumnya
+        if (animationRef.current) cancelAnimation(); // Bersihkan animasi sebelumnya
 
-        const Vox = kecepatanAwal * CosValue;
-        const Voy = kecepatanAwal * SinValue;
-        const startTime = Date.now();
+        // Perhitungan kecepatan dikali dengan sin dan cos sudut
+        let Vox = kecepatanAwal * CosValue;
+        let Voy = kecepatanAwal * SinValue;
+
+        const t = 0.01; // langkah waktu
+        const waktuTempuh = (2 * Voy) / gravity; // Waktu total di udara
+        const totalFrame = Number((waktuTempuh / t).toFixed(0)); // Total frame animasi per-detik
 
         gambarLapangan(); // Gambar lapangan
 
+        let xAnimation: number = 0;
+        let yAnimation: number = 0;
+        let perulangan: number = 0;
         const update = () => {
-          const t = (Date.now() - startTime) / 100; // Konversi waktu ke detik
-          const x = Vox * t;
-          const y = Voy * t - gravity * Math.pow(t, 2) + 90;
+          // Mencari sisi X
+          const aX = mencariGayaHambatanHorizontal(Vox, drag, massaBenda); // mencari percepatan horizontal
+          const vt_x = Vox - aX * t; // mencari kecepatan dalam waktu tertentu
+          xAnimation += Vox * t + massaBenda * -aX * Math.pow(t, 2); // menyimpan dan menambahkan posisi x
 
-          console.log(x);
+          // Mencari sisi Y [Gravitasi disini itu aY]
+          const vt_y = Voy - gravity * t; // mencari kecepatan dalam waktu tertentu
+          yAnimation += Voy * t + massaBenda * -gravity * Math.pow(t, 2); // menyimpan dan menambahkan posisi y
 
-          if (!isNaN(x) || !isNaN(y)) {
+          if (!isNaN(xAnimation) || !isNaN(yAnimation)) {
+            const x = xAnimation * 18.18;
+            const y = yAnimation * 18.18;
             context.clearRect(0, 0, width, height); // Bersihkan canvas
             gambarLapangan(); // Gambar Lapangan
-            gambarBola(x, y, sudut); // Gambar bola
-            lokasiBola.current.length && lokasiBola.current.forEach((lokasi) => gambarBola(lokasi.x, lokasi.y, canvasData.sudut));
+            gambarBola(x - 5, y + 90, sudut); // Gambar bola
+            lokasiBola.current.length && lokasiBola.current.forEach((lokasi) => gambarBola(lokasi.x - 5, lokasi.y + 90, canvasData.sudut));
 
             if (tinggiSementara === 0) tinggiSementara = y;
             if (tinggiSementara < y) tinggiSementara = y;
@@ -103,11 +122,11 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
                 ? `${(tinggiSementara * perKM).toFixed(2)} KM`
                 : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
               akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
-              waktuTempuh: `${t} Detik`,
+              waktuTempuh: `${perulangan / 100} Detik`,
             });
 
             // Berhenti jika bola mencapai tanah
-            if (y < 90) {
+            if (perulangan >= totalFrame) {
               if (lokasiBola.current.length >= 2) lokasiBola.current.shift();
               lokasiBola.current.push({ x, y });
               animationRef.current = null;
@@ -116,6 +135,10 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
             } // Hentikan animasi
             // Lanjutkan animasi
             animationRef.current = requestAnimationFrame(update);
+
+            Vox = Number(vt_x);
+            Voy = Number(vt_y);
+            perulangan++;
           }
         };
 
@@ -136,7 +159,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
     };
 
     return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (animationRef.current) cancelAnimation(); // Bersihkan animasi sebelumnya
     };
   }, [canvasData, setDataTable, lokasiBola, CosValue, SinValue]);
 

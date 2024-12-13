@@ -42,12 +42,12 @@ const mencariLuasPenampang = (jariJariBola: number) => {
   return Math.PI * Math.pow(jariJariBola, 2);
 };
 
-const mencariGayaHambatanHorizontal = (kecepatanAwal: number, sudut: number, dragBola: number, massaBenda: number) => {
+const mencariGayaHambatanHorizontal = (Vox: number, dragBola: number, massaBenda: number) => {
   const jariJariBola = 0.11; // m
   const densitasUdara = 1.23; // kg/m^3
   const penampangBola = mencariLuasPenampang(jariJariBola); // m^2
 
-  const Fd = 0.5 * dragBola * densitasUdara *  penampangBola * Math.pow(kecepatanAwal * mencariSinCos(sudut).CosValue, 2); // N
+  const Fd = 0.5 * dragBola * densitasUdara *  penampangBola * Math.pow(Vox, 2); // N
   const aX = Fd / massaBenda; // m/s^2
   return aX;
 };
