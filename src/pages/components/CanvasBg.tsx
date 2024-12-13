@@ -82,10 +82,11 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
         gambarLapangan(); // Gambar lapangan
 
         const update = () => {
-          // const waktu = 2*Voy/gravity;
           const t = (Date.now() - startTime) / 100; // Konversi waktu ke detik
-          const x = Vox * t
+          const x = Vox * t;
           const y = Voy * t - gravity * Math.pow(t, 2) + 90;
+
+          console.log(x);
 
           if (!isNaN(x) || !isNaN(y)) {
             context.clearRect(0, 0, width, height); // Bersihkan canvas
@@ -102,17 +103,17 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
                 ? `${(tinggiSementara * perKM).toFixed(2)} KM`
                 : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
               akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
-              waktuTempuh: `${t * 2} Detik`,
+              waktuTempuh: `${t} Detik`,
             });
 
             // Berhenti jika bola mencapai tanah
-              if (y < 90) {
-                if (lokasiBola.current.length >= 2) lokasiBola.current.shift();
-                lokasiBola.current.push({ x, y });
-                animationRef.current = null;
-                gambarBola(0, 0, canvasData.sudut);
-                return;
-              } // Hentikan animasi
+            if (y < 90) {
+              if (lokasiBola.current.length >= 2) lokasiBola.current.shift();
+              lokasiBola.current.push({ x, y });
+              animationRef.current = null;
+              gambarBola(0, 0, canvasData.sudut);
+              return;
+            } // Hentikan animasi
             // Lanjutkan animasi
             animationRef.current = requestAnimationFrame(update);
           }

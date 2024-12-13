@@ -51,4 +51,5 @@ const mencariGayaHambatanHorizontal = (kecepatanAwal: number, sudut: number, dra
   const aX = Fd / massaBenda; // m/s^2
   return aX;
 };
+
 export { menghitungAkhirMendatar, menghitungAkhirVerHori, mencariGayaHambatanHorizontal };
