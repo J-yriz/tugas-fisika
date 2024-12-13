@@ -13,7 +13,6 @@ export let clearCanvas: () => void;
 const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDataTable: React.Dispatch<React.SetStateAction<IDataTable>> }) => {
   const animationRef = useRef<number | null>(null); // Menyimpan ID animasi untuk dibatalkan
   const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referensi ke canvas
-  // const resistensiUdara = useRef<number>(Number((Math.random() * (15 - 1) + 1).toFixed(3))).current;
   const [viewUser, setViewUser] = useState<IViewUser>({ tengahMendatar: "0 Meter", akhirMendatar: "0 Meter", waktuTempuh: "0 Detik" });
 
   // Menyimpan Lokasi Bola sebelumnya
@@ -110,7 +109,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
             const y = yAnimation * 18.18;
             context.clearRect(0, 0, width, height); // Bersihkan canvas
             gambarLapangan(); // Gambar Lapangan
-            gambarBola(x - 5, y + 90, sudut); // Gambar bola
+            gambarBola(x, y + 90, sudut); // Gambar bola
             lokasiBola.current.length && lokasiBola.current.forEach((lokasi) => gambarBola(lokasi.x - 5, lokasi.y + 90, canvasData.sudut));
 
             if (tinggiSementara === 0) tinggiSementara = y;
@@ -126,7 +125,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
             });
 
             // Berhenti jika bola mencapai tanah
-            if (perulangan >= totalFrame) {
+            if (perulangan >= totalFrame || y + 90 < 90) {
               if (lokasiBola.current.length >= 2) lokasiBola.current.shift();
               lokasiBola.current.push({ x, y });
               animationRef.current = null;
