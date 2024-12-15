@@ -123,7 +123,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
                 ? `${(tinggiSementara * perKM).toFixed(2)} KM`
                 : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
               akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
-              waktuTempuh: `${perulangan / 50} Detik`,
+              waktuTempuh: `${(perulangan * t).toFixed(2)} Detik`,
             });
 
             // Berhenti jika bola mencapai tanah
