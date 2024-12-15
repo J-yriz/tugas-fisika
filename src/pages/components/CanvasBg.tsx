@@ -98,7 +98,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
         let perulangan: number = 0;
         const update = () => {
           // Mencari sisi X
-          const { Fd, aX } = mencariGayaHambatanHorizontal(Vox, drag, massaBenda); // mencari percepatan horizontal
+          const aX = mencariGayaHambatanHorizontal(Vox, drag, massaBenda); // mencari percepatan horizontal
           const vt_x = Vox - aX * t; // mencari kecepatan dalam waktu tertentu
           xAnimation += Vox * t + massaBenda * -aX * Math.pow(t, 2); // menyimpan dan menambahkan posisi x
 

@@ -53,7 +53,7 @@ const mencariGayaHambatanHorizontal = (Vox: number, dragBola: number, massaBenda
 
   const Fd = mencariFd(dragBola, densitasUdara, penampangBola, Vox); // N
   const aX = Fd / massaBenda; // m/s^2
-  return { Fd, aX };
+  return aX;
 };
 
 export { menghitungAkhirMendatar, menghitungAkhirVerHori, mencariFd, mencariGayaHambatanHorizontal };
