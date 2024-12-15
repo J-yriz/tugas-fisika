@@ -85,7 +85,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
         let Vox = kecepatanAwal * CosValue;
         let Voy = kecepatanAwal * SinValue;
 
-        const t = 0.01; // langkah waktu
+        const t = 0.02; // langkah waktu
         const waktuTempuh = (2 * Voy) / gravity; // Waktu total di udara
         const totalFrame = Number((waktuTempuh / t).toFixed(0)); // Total frame animasi per-detik
 
@@ -109,7 +109,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
             const y = yAnimation * 18.18;
             context.clearRect(0, 0, width, height); // Bersihkan canvas
             gambarLapangan(); // Gambar Lapangan
-            gambarBola(x, y + 90, sudut); // Gambar bola
+            gambarBola(x - 5, y + 90, sudut); // Gambar bola
             lokasiBola.current.length && lokasiBola.current.forEach((lokasi) => gambarBola(lokasi.x - 5, lokasi.y + 90, canvasData.sudut));
 
             if (tinggiSementara === 0) tinggiSementara = y;
