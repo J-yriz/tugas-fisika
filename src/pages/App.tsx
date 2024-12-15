@@ -29,7 +29,7 @@ function App() {
           <input type="number" id="kecepatan" name="kecepatan" placeholder="Masukan kecepatan..." className="bg-slate-200 outline-none p-1 rounded" />
           <input type="number" id="sudut" name="sudut" placeholder="Masukan untuk sudut.." className="bg-slate-200 outline-none p-1 rounded" />
           <button type="submit" className="bg-sky-300 hover:bg-sky-400 transition-colors p-1 px-3 rounded">
-            GO!
+            <img src="/bola.svg" alt="Play" width={24} />
           </button>
           <ButtonClear />
         </form>
