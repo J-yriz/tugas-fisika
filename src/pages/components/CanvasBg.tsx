@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { CosValues, ICanvasData, IDataTable, SinValues } from "../../utility/Type";
-import { mencariGayaHambatanHorizontal } from "../../utility/Function";
+import { mencariFd, mencariGayaHambatanHorizontal } from "../../utility/Function";
 
 interface IViewUser {
   tengahMendatar: string;
@@ -23,6 +23,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
   const massaBenda = 0.5; // kg
   const gravity = 9.81; // m/s^2
   const drag = 0.3; // koefisien hambatan bola
+  const gayaGesekan = 1.4715; // gaya gesekan
 
   const CosValue = CosValues[`COS_${canvasData.sudut}` as keyof typeof CosValues];
   const SinValue = SinValues[`SIN_${canvasData.sudut}` as keyof typeof SinValues];
@@ -86,17 +87,18 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
         let Voy = kecepatanAwal * SinValue;
 
         const t = 0.02; // langkah waktu
-        const waktuTempuh = (2 * Voy) / gravity; // Waktu total di udara
+        const Fd = mencariFd(drag, 1.23, 0.04, Vox); // Gaya hambatan udara
+        const waktuTempuh = sudut <= 0 ? Vox / ((Fd + gayaGesekan) / massaBenda) : (2 * Voy) / gravity; // Waktu total di udara
         const totalFrame = Number((waktuTempuh / t).toFixed(0)); // Total frame animasi per-detik
-
+        
         gambarLapangan(); // Gambar lapangan
-
+        
         let xAnimation: number = 0;
         let yAnimation: number = 0;
         let perulangan: number = 0;
         const update = () => {
           // Mencari sisi X
-          const aX = mencariGayaHambatanHorizontal(Vox, drag, massaBenda); // mencari percepatan horizontal
+          const { Fd, aX } = mencariGayaHambatanHorizontal(Vox, drag, massaBenda); // mencari percepatan horizontal
           const vt_x = Vox - aX * t; // mencari kecepatan dalam waktu tertentu
           xAnimation += Vox * t + massaBenda * -aX * Math.pow(t, 2); // menyimpan dan menambahkan posisi x
 
@@ -106,7 +108,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
 
           if (!isNaN(xAnimation) || !isNaN(yAnimation)) {
             const x = xAnimation * 18.18;
-            const y = yAnimation * 18.18;
+            const y = yAnimation < 0 ? 0 : yAnimation * 18.18;
             context.clearRect(0, 0, width, height); // Bersihkan canvas
             gambarLapangan(); // Gambar Lapangan
             gambarBola(x - 5, y + 90, sudut); // Gambar bola
