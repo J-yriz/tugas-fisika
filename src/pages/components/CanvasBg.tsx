@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { CosValues, ICanvasData, IDataTable, SinValues } from "../../utility/Type";
-import { mencariFd, mencariGayaHambatanHorizontal } from "../../utility/Function";
+import { mencariFd, mencariGayaHambatanHorizontal, mencariLuasPenampang } from "../../utility/Function";
 
 interface IViewUser {
   tengahMendatar: string;
@@ -87,10 +87,10 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
         let Voy = kecepatanAwal * SinValue;
 
         const t = 0.02; // langkah waktu
-        const Fd = mencariFd(drag, 1.23, 0.04, Vox); // Gaya hambatan udara
+        const Fd = mencariFd(drag, 1.23, mencariLuasPenampang(0.11), Vox); // Gaya hambatan udara
         const waktuTempuh = sudut <= 0 ? Vox / ((Fd + gayaGesekan) / massaBenda) : (2 * Voy) / gravity; // Waktu total di udara
         const totalFrame = Number((waktuTempuh / t).toFixed(0)); // Total frame animasi per-detik
-        
+
         gambarLapangan(); // Gambar lapangan
         
         let xAnimation: number = 0;
@@ -123,7 +123,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
                 ? `${(tinggiSementara * perKM).toFixed(2)} KM`
                 : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
               akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
-              waktuTempuh: `${perulangan / 100} Detik`,
+              waktuTempuh: `${perulangan / 50} Detik`,
             });
 
             // Berhenti jika bola mencapai tanah

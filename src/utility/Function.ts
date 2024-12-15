@@ -56,4 +56,4 @@ const mencariGayaHambatanHorizontal = (Vox: number, dragBola: number, massaBenda
   return aX;
 };
 
-export { menghitungAkhirMendatar, menghitungAkhirVerHori, mencariFd, mencariGayaHambatanHorizontal };
+export { mencariLuasPenampang, mencariFd, mencariGayaHambatanHorizontal };
