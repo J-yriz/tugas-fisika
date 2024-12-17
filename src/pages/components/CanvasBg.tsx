@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { CosValues, ICanvasData, IDataTable, SinValues } from "../../utility/Type";
+import { CosValues, ICanvasData, SinValues } from "../../utility/Type";
 import { mencariFd, mencariGayaHambatanHorizontal, mencariLuasPenampang } from "../../utility/Function";
 
 interface IViewUser {
@@ -10,16 +10,22 @@ interface IViewUser {
 
 export let clearCanvas: () => void;
 
-const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDataTable: React.Dispatch<React.SetStateAction<IDataTable>> }) => {
+const CanvasBg = ({
+  canvasData,
+  active,
+}: {
+  canvasData: ICanvasData;
+  active: boolean;
+}) => {
   const animationRef = useRef<number | null>(null); // Menyimpan ID animasi untuk dibatalkan
   const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referensi ke canvas
   const [viewUser, setViewUser] = useState<IViewUser>({ tengahMendatar: "0 Meter", akhirMendatar: "0 Meter", waktuTempuh: "0 Detik" });
+  const canvasSizeRef = useRef<{ width: number; height: number }>({ width: window.innerWidth - 50, height: window.innerHeight });
 
-  // Menyimpan Lokasi Bola sebelumnya
   const lokasiBola = useRef<{ x: number; y: number }[]>([]);
 
-  const perMeter = 0.055; // per 1 meter dalam pixel
-  const perKM = 0.000055; // per 1 KM dalam pixel
+  const perMeter = 55 / canvasSizeRef.current.width; // per 1 meter dalam pixel
+  const perKM = perMeter / 1000; // per 1 KM dalam pixel
   const massaBenda = 0.5; // kg
   const gravity = 9.81; // m/s^2
   const drag = 0.3; // koefisien hambatan bola
@@ -33,13 +39,16 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
     if (!canvas) return;
     const context = canvas.getContext("2d") as CanvasRenderingContext2D;
 
-    const width = canvas.width; // Lebar canvas
-    const height = canvas.height; // Tinggi canvas
+    const { width, height } = canvasSizeRef.current;
+    canvas.width = width;
+    canvas.height = height;
 
     const backgroundImage = new Image();
-    backgroundImage.src = "/bg-cover.svg";
+    backgroundImage.src = "/bg-cover1.svg";
     const ballImage = new Image();
     ballImage.src = "/bola.svg";
+    const ronaldoImage = new Image();
+    ronaldoImage.src = "/ronaldo.svg";
 
     let ballImageLoaded = false;
     ballImage.onload = () => (ballImageLoaded = true);
@@ -57,13 +66,13 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
       animationRef.current = null;
     };
 
-    const gambarBola = (x: number, y: number, sudut: number) => {
+    const gambarAttribute = (x: number, y: number, sudut: number) => {
       if (ballImageLoaded) {
         context.save(); // Simpan keadaan canvas sebelum di flip
-        context.drawImage(ballImage, x, y > 90 ? y : 90, 30, 30);
+        context.drawImage(ballImage, x, y > 90 ? y : 90, 45, 45);
         context.restore(); // Setel ulang keadaan canvas sebelum di flip
       } else {
-        setTimeout(() => gambarBola(x, y, sudut), 100); // Coba lagi setelah 100ms
+        setTimeout(() => gambarAttribute(x, y, sudut), 100); // Coba lagi setelah 100ms
       }
     };
 
@@ -73,7 +82,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
       lokasiBola.current = [];
       context.clearRect(0, 0, width, height);
       gambarLapangan();
-      gambarBola(0, 0, canvasData.sudut);
+      gambarAttribute(120, 0, canvasData.sudut);
     };
 
     // Gambar lapangan
@@ -92,13 +101,15 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
         const totalFrame = Number((waktuTempuh / t).toFixed(0)); // Total frame animasi per-detik
 
         gambarLapangan(); // Gambar lapangan
-        
+        gambarAttribute(120, 0, canvasData.sudut);
+        context.drawImage(ronaldoImage, 25, 90, 90, 200);
+
         let xAnimation: number = 0;
         let yAnimation: number = 0;
         let perulangan: number = 0;
         const update = () => {
           // Mencari sisi X
-          const aX = mencariGayaHambatanHorizontal(Vox, drag, massaBenda); // mencari percepatan horizontal
+          const aX = active ? mencariGayaHambatanHorizontal(Vox, drag, massaBenda) : 0; // mencari percepatan horizontal
           const vt_x = Vox - aX * t; // mencari kecepatan dalam waktu tertentu
           xAnimation += Vox * t + massaBenda * -aX * Math.pow(t, 2); // menyimpan dan menambahkan posisi x
 
@@ -107,12 +118,13 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
           yAnimation += Voy * t + massaBenda * -gravity * Math.pow(t, 2); // menyimpan dan menambahkan posisi y
 
           if (!isNaN(xAnimation) || !isNaN(yAnimation)) {
-            const x = xAnimation * 18.18;
-            const y = yAnimation < 0 ? 0 : yAnimation * 18.18;
+            const x = (xAnimation * canvasSizeRef.current.width) / 55;
+            const y = yAnimation < 0 ? 0 : (yAnimation * canvasSizeRef.current.width) / 55;
             context.clearRect(0, 0, width, height); // Bersihkan canvas
             gambarLapangan(); // Gambar Lapangan
-            gambarBola(x - 5, y + 90, sudut); // Gambar bola
-            lokasiBola.current.length && lokasiBola.current.forEach((lokasi) => gambarBola(lokasi.x - 5, lokasi.y + 90, canvasData.sudut));
+            gambarAttribute(x + 115, y + 90, sudut); // Gambar bola
+            context.drawImage(ronaldoImage, 30, 90, 90, 200);
+            lokasiBola.current.length && lokasiBola.current.forEach((lokasi) => gambarAttribute(lokasi.x + 115, lokasi.y + 90, canvasData.sudut));
 
             if (tinggiSementara === 0) tinggiSementara = y;
             if (tinggiSementara < y) tinggiSementara = y;
@@ -122,7 +134,7 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
               tengahMendatar: changeTengahMendatar
                 ? `${(tinggiSementara * perKM).toFixed(2)} KM`
                 : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
-              akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
+              akhirMendatar: changeAkhirMendatar ? `${((x + 115) * perKM).toFixed(2)} KM` : `${((x + 115) * perMeter).toFixed(2)} Meter`,
               waktuTempuh: `${(perulangan * t).toFixed(2)} Detik`,
             });
 
@@ -131,7 +143,8 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
               if (lokasiBola.current.length >= 2) lokasiBola.current.shift();
               lokasiBola.current.push({ x, y });
               animationRef.current = null;
-              gambarBola(0, 0, canvasData.sudut);
+              gambarAttribute(120, 0, canvasData.sudut);
+              context.drawImage(ronaldoImage, 30, 90, 90, 200);
               return;
             } // Hentikan animasi
             // Lanjutkan animasi
@@ -148,39 +161,26 @@ const CanvasBg = ({ canvasData, setDataTable }: { canvasData: ICanvasData; setDa
 
       // Atur ulang transformasi dan warna
       context.setTransform(1, 0, 0, -1, 0, height);
-      gambarBola(0, 0, canvasData.sudut);
 
       // Mulai menggambar
       draw(canvasData.kecepatan, Number(canvasData.sudut));
-
-      setDataTable({
-        percepatan: { massaBenda },
-        sudut: { sin: SinValue, cos: CosValue },
-      });
     };
 
     return () => {
       if (animationRef.current) cancelAnimation(); // Bersihkan animasi sebelumnya
     };
-  }, [canvasData, setDataTable, lokasiBola, CosValue, SinValue]);
+  }, [canvasData, lokasiBola, CosValue, SinValue, perKM, perMeter, canvasSizeRef]);
 
   return (
     <div className="place-self-center">
       <div className="flex justify-between">
-        <div className="flex items-center space-x-3">
-          <p>Jarak Awal : 0.00 Meter</p>
+        <div className="flex items-center space-x-3 font-semibold bg-amber-400/50 px-5 p-2 mb-2 rounded-full">
           <p>Titik Tertinggi : {viewUser.tengahMendatar}</p>
           <p>Jarak Akhir : {viewUser.akhirMendatar}</p>
           <p>Waktu Tempuh : {viewUser.waktuTempuh}</p>
         </div>
-        <p>Drag : {drag}</p>
       </div>
-      <canvas ref={canvasRef} width={1000} height={500} className="border-2" />
-      <div className="information space-y-7 mt-3">
-        <div className="w-full bg-green-400 rounded h-1">
-          <p className="text-center p-1">55 Meter / 0,055 KM</p>
-        </div>
-      </div>
+      <canvas ref={canvasRef} className="border-2" />
     </div>
   );
 };

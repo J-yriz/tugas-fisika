@@ -1,11 +1,18 @@
 import React, { useState } from "react";
 import CanvasBg from "./components/CanvasBg";
 import ButtonClear from "./components/ButtonClear";
-import { ICanvasData, IDataTable } from "../utility/Type";
+import { ICanvasData } from "../utility/Type";
+import ButtonDrag from "./components/ButtonDrag";
+// import ButtonAction from "./components/ButtonAction";
 
 function App() {
+  const [active, setActive] = useState<boolean>(true);
+  // const [pausePlay, setPausePlay] = useState<boolean>(false);
   const [canvasData, setCanvasData] = useState<ICanvasData>({} as ICanvasData);
-  const [dataTable, setDataTable] = useState<IDataTable>({ percepatan: { massaBenda: 0 }, sudut: { sin: 0, cos: 0 } });
+  // const [dataTable, setDataTable] = useState<IDataTable>({ percepatan: { massaBenda: 0 }, sudut: { sin: 0, cos: 0 } });
+
+  const handleDragMode = () => setActive(!active);
+  // const handlePausePlay = () => setPausePlay(!pausePlay);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -16,7 +23,7 @@ function App() {
       sudut: Number(formData.get("sudut")),
     };
 
-    if (inputData.kecepatan <= 0) return;
+    if (inputData.kecepatan <= 0 && inputData.kecepatan > 33) return;
     if (inputData.sudut > 90) return alert("Sudut tidak boleh lebih dari 90 derajat");
 
     setCanvasData(inputData);
@@ -24,7 +31,8 @@ function App() {
 
   return (
     <>
-      <div className="container mx-auto space-y-2">
+      <div className="container mx-auto space-y-2 my-5">
+        <CanvasBg canvasData={canvasData} active={active} />
         <form onSubmit={handleSubmit} className="font-sans flex items-center space-x-2 justify-center mt-5">
           <input type="number" id="kecepatan" name="kecepatan" placeholder="Masukan kecepatan..." className="bg-slate-200 outline-none p-1 rounded" />
           <input type="number" id="sudut" name="sudut" placeholder="Masukan untuk sudut.." className="bg-slate-200 outline-none p-1 rounded" />
@@ -32,8 +40,9 @@ function App() {
             <img src="/bola.svg" alt="Play" width={24} />
           </button>
           <ButtonClear />
+          <ButtonDrag active={active} handleDragMode={handleDragMode} />
+          {/* <ButtonAction pausePlay={pausePlay} handlePausePlay={handlePausePlay} /> */}
         </form>
-        <CanvasBg canvasData={canvasData} setDataTable={setDataTable} />
       </div>
       {/* <table className="place-self-center my-16">
         <thead>
