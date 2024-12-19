@@ -24,7 +24,7 @@ function App() {
     };
 
     if (inputData.kecepatan <= 0 && inputData.kecepatan > 33) return;
-    if (inputData.sudut > 90) return alert("Sudut tidak boleh lebih dari 90 derajat");
+    if (inputData.sudut > 90) return alert("Sudut tidak boleh lebih dari 85 derajat");
 
     setCanvasData(inputData);
   };
@@ -35,7 +35,7 @@ function App() {
         <CanvasBg canvasData={canvasData} active={active} />
         <form onSubmit={handleSubmit} className="font-sans flex items-center space-x-2 justify-center mt-5">
           <input type="number" id="kecepatan" name="kecepatan" placeholder="Masukan kecepatan..." className="bg-slate-200 outline-none p-1 rounded" />
-          <input type="number" id="sudut" name="sudut" placeholder="Masukan untuk sudut.." className="bg-slate-200 outline-none p-1 rounded" />
+          <input type="number" id="sudut" name="sudut" max={90} placeholder="Masukan untuk sudut.." className="bg-slate-200 outline-none p-1 rounded" />
           <button type="submit" className="bg-sky-300 hover:bg-sky-400 transition-colors p-1 px-3 rounded">
             <img src="/bola.svg" alt="Play" width={24} />
           </button>

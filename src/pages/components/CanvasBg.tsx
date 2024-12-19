@@ -10,25 +10,18 @@ interface IViewUser {
 
 export let clearCanvas: () => void;
 
-const CanvasBg = ({
-  canvasData,
-  active,
-}: {
-  canvasData: ICanvasData;
-  active: boolean;
-}) => {
+const CanvasBg = ({ canvasData, active }: { canvasData: ICanvasData; active: boolean }) => {
   const animationRef = useRef<number | null>(null); // Menyimpan ID animasi untuk dibatalkan
   const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referensi ke canvas
   const [viewUser, setViewUser] = useState<IViewUser>({ tengahMendatar: "0 Meter", akhirMendatar: "0 Meter", waktuTempuh: "0 Detik" });
-  const canvasSizeRef = useRef<{ width: number; height: number }>({ width: window.innerWidth - 50, height: window.innerHeight });
 
   const lokasiBola = useRef<{ x: number; y: number }[]>([]);
 
-  const perMeter = 55 / canvasSizeRef.current.width; // per 1 meter dalam pixel
+  const perMeter = 0.055; // per 1 meter dalam pixel
   const perKM = perMeter / 1000; // per 1 KM dalam pixel
   const massaBenda = 0.5; // kg
   const gravity = 9.81; // m/s^2
-  const drag = 0.3; // koefisien hambatan bola
+  const drag = 0.5; // koefisien hambatan bola
   const gayaGesekan = 1.4715; // gaya gesekan
 
   const CosValue = CosValues[`COS_${canvasData.sudut}` as keyof typeof CosValues];
@@ -39,9 +32,7 @@ const CanvasBg = ({
     if (!canvas) return;
     const context = canvas.getContext("2d") as CanvasRenderingContext2D;
 
-    const { width, height } = canvasSizeRef.current;
-    canvas.width = width;
-    canvas.height = height;
+    const { width, height } = { width: canvas.width, height: canvas.height };
 
     const backgroundImage = new Image();
     backgroundImage.src = "/bg-cover1.svg";
@@ -69,6 +60,7 @@ const CanvasBg = ({
     const gambarAttribute = (x: number, y: number, sudut: number) => {
       if (ballImageLoaded) {
         context.save(); // Simpan keadaan canvas sebelum di flip
+        context.drawImage(ronaldoImage, 30, 90, 90, 200);
         context.drawImage(ballImage, x, y > 90 ? y : 90, 45, 45);
         context.restore(); // Setel ulang keadaan canvas sebelum di flip
       } else {
@@ -92,12 +84,13 @@ const CanvasBg = ({
         if (animationRef.current) cancelAnimation(); // Bersihkan animasi sebelumnya
 
         // Perhitungan kecepatan dikali dengan sin dan cos sudut
-        let Vox = kecepatanAwal * CosValue;
-        let Voy = kecepatanAwal * SinValue;
+        let Vox = Number((kecepatanAwal * CosValue).toFixed(2));
+        let Voy = Number((kecepatanAwal * SinValue).toFixed(2));
 
         const t = 0.02; // langkah waktu
-        const Fd = mencariFd(drag, 1.23, mencariLuasPenampang(0.11), Vox); // Gaya hambatan udara
-        const waktuTempuh = sudut <= 0 ? Vox / ((Fd + gayaGesekan) / massaBenda) : (2 * Voy) / gravity; // Waktu total di udara
+        const a = -(0.3 * (gravity * massaBenda)) / massaBenda;
+        const kondisiSudut = sudut <= 0;
+        const waktuTempuh = kondisiSudut ? -kecepatanAwal / a : (2 * Voy) / gravity; // Waktu total di udara
         const totalFrame = Number((waktuTempuh / t).toFixed(0)); // Total frame animasi per-detik
 
         gambarLapangan(); // Gambar lapangan
@@ -107,9 +100,17 @@ const CanvasBg = ({
         let xAnimation: number = 0;
         let yAnimation: number = 0;
         let perulangan: number = 0;
+        let x = 0;
+        let y = 0;
         const update = () => {
           // Mencari sisi X
-          const aX = active ? mencariGayaHambatanHorizontal(Vox, drag, massaBenda) : 0; // mencari percepatan horizontal
+          const aX = active
+            ? kondisiSudut
+              ? (mencariFd(drag, 1.23, Number(mencariLuasPenampang(0.11).toFixed(2)), Vox) + gayaGesekan) / massaBenda
+              : mencariGayaHambatanHorizontal(Vox, drag, massaBenda)
+            : kondisiSudut
+            ? gayaGesekan / massaBenda
+            : 0; // mencari percepatan horizontal
           const vt_x = Vox - aX * t; // mencari kecepatan dalam waktu tertentu
           xAnimation += Vox * t + massaBenda * -aX * Math.pow(t, 2); // menyimpan dan menambahkan posisi x
 
@@ -118,13 +119,13 @@ const CanvasBg = ({
           yAnimation += Voy * t + massaBenda * -gravity * Math.pow(t, 2); // menyimpan dan menambahkan posisi y
 
           if (!isNaN(xAnimation) || !isNaN(yAnimation)) {
-            const x = (xAnimation * canvasSizeRef.current.width) / 55;
-            const y = yAnimation < 0 ? 0 : (yAnimation * canvasSizeRef.current.width) / 55;
+            x = kondisiSudut && vt_x <= 0 ? x : xAnimation * 18.18;
+            y = yAnimation < 0 ? 0 : yAnimation * 18.18;
+
             context.clearRect(0, 0, width, height); // Bersihkan canvas
             gambarLapangan(); // Gambar Lapangan
-            gambarAttribute(x + 115, y + 90, sudut); // Gambar bola
-            context.drawImage(ronaldoImage, 30, 90, 90, 200);
-            lokasiBola.current.length && lokasiBola.current.forEach((lokasi) => gambarAttribute(lokasi.x + 115, lokasi.y + 90, canvasData.sudut));
+            gambarAttribute(x + 120, y + 90, sudut); // Gambar bola
+            lokasiBola.current.length && lokasiBola.current.forEach((lokasi) => gambarAttribute(lokasi.x + 120, lokasi.y + 90, canvasData.sudut));
 
             if (tinggiSementara === 0) tinggiSementara = y;
             if (tinggiSementara < y) tinggiSementara = y;
@@ -134,7 +135,7 @@ const CanvasBg = ({
               tengahMendatar: changeTengahMendatar
                 ? `${(tinggiSementara * perKM).toFixed(2)} KM`
                 : `${(tinggiSementara * perMeter).toFixed(2)} Meter`,
-              akhirMendatar: changeAkhirMendatar ? `${((x + 115) * perKM).toFixed(2)} KM` : `${((x + 115) * perMeter).toFixed(2)} Meter`,
+              akhirMendatar: changeAkhirMendatar ? `${(x * perKM).toFixed(2)} KM` : `${(x * perMeter).toFixed(2)} Meter`,
               waktuTempuh: `${(perulangan * t).toFixed(2)} Detik`,
             });
 
@@ -144,12 +145,12 @@ const CanvasBg = ({
               lokasiBola.current.push({ x, y });
               animationRef.current = null;
               gambarAttribute(120, 0, canvasData.sudut);
-              context.drawImage(ronaldoImage, 30, 90, 90, 200);
               return;
             } // Hentikan animasi
             // Lanjutkan animasi
             animationRef.current = requestAnimationFrame(update);
 
+            console.log(Vox, mencariFd(drag, 1.23, Number(mencariLuasPenampang(0.11).toFixed(2)), Vox), perulangan);
             Vox = Number(vt_x);
             Voy = Number(vt_y);
             perulangan++;
@@ -169,18 +170,18 @@ const CanvasBg = ({
     return () => {
       if (animationRef.current) cancelAnimation(); // Bersihkan animasi sebelumnya
     };
-  }, [canvasData, lokasiBola, CosValue, SinValue, perKM, perMeter, canvasSizeRef]);
+  }, [canvasData, lokasiBola, CosValue, SinValue, perKM, perMeter]);
 
   return (
     <div className="place-self-center">
       <div className="flex justify-between">
-        <div className="flex items-center space-x-3 font-semibold bg-amber-400/50 px-5 p-2 mb-2 rounded-full">
+        <div className="flex items-center space-x-3 font-semibold bg-[#FF85EF] px-5 p-3 mb-2 rounded-md">
           <p>Titik Tertinggi : {viewUser.tengahMendatar}</p>
           <p>Jarak Akhir : {viewUser.akhirMendatar}</p>
           <p>Waktu Tempuh : {viewUser.waktuTempuh}</p>
         </div>
       </div>
-      <canvas ref={canvasRef} className="border-2" />
+      <canvas ref={canvasRef} width={1900} height={800} className="border-2" />
     </div>
   );
 };
