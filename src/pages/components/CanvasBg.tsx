@@ -104,18 +104,18 @@ const CanvasBg = ({ canvasData, active }: { canvasData: ICanvasData; active: boo
         let y = 0;
         const update = () => {
           // Mencari sisi X
-          const aX = active
+          const aX = Number((active
             ? kondisiSudut
               ? (mencariFd(drag, 1.23, Number(mencariLuasPenampang(0.11).toFixed(2)), Vox) + gayaGesekan) / massaBenda
               : mencariGayaHambatanHorizontal(Vox, drag, massaBenda)
             : kondisiSudut
             ? gayaGesekan / massaBenda
-            : 0; // mencari percepatan horizontal
-          const vt_x = Vox - aX * t; // mencari kecepatan dalam waktu tertentu
+            : 0).toFixed(2)); // mencari percepatan horizontal
+          const vt_x = Number((Vox - aX * t).toFixed(2)); // mencari kecepatan dalam waktu tertentu
           xAnimation += Vox * t + massaBenda * -aX * Math.pow(t, 2); // menyimpan dan menambahkan posisi x
 
           // Mencari sisi Y [Gravitasi disini itu aY]
-          const vt_y = Voy - gravity * t; // mencari kecepatan dalam waktu tertentu
+          const vt_y = Number((Voy - gravity * t).toFixed(2)); // mencari kecepatan dalam waktu tertentu
           yAnimation += Voy * t + massaBenda * -gravity * Math.pow(t, 2); // menyimpan dan menambahkan posisi y
 
           if (!isNaN(xAnimation) || !isNaN(yAnimation)) {
@@ -150,9 +150,10 @@ const CanvasBg = ({ canvasData, active }: { canvasData: ICanvasData; active: boo
             // Lanjutkan animasi
             animationRef.current = requestAnimationFrame(update);
 
-            console.log(Vox, mencariFd(drag, 1.23, Number(mencariLuasPenampang(0.11).toFixed(2)), Vox), perulangan);
-            Vox = Number(vt_x);
-            Voy = Number(vt_y);
+            console.log(Vox, Number((mencariFd(drag, 1.23, Number(mencariLuasPenampang(0.11).toFixed(2)), Vox)).toFixed(2)), aX, vt_x, Voy, gravity, vt_y, perulangan);
+            // console.log(Vox, gayaGesekan, Number((mencariFd(drag, 1.23, Number(mencariLuasPenampang(0.11).toFixed(2)), Vox).toFixed(2))), aX, vt_x, perulangan);
+            Vox = vt_x;
+            Voy = vt_y;
             perulangan++;
           }
         };
